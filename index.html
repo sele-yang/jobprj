@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>예원 프로젝트</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f7f6f3; --surface:#fff; --surface2:#f2f1ee;
+  --border:#e5e4e0; --border2:#d0cfc9;
+  --text:#1a1916; --muted:#8a8880;
+  --accent:#e8622a;
+  --green:#2a7a4b; --green-bg:#edf7f1;
+  --amber:#a05c10; --amber-bg:#fef3e2;
+  --red:#c0392b; --red-bg:#fdecea;
+  --radius:8px; --radius-lg:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding-bottom:6rem}
+
+.topbar{background:var(--text);color:#f7f6f3;padding:0 2rem;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.topbar-date{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:rgba(247,246,243,.4);letter-spacing:.04em}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.last-updated{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:rgba(247,246,243,.35)}
+
+.stats-strip{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;flex-wrap:wrap}
+.stat-item{padding:1.1rem 2rem 1.1rem 0;margin-right:2rem;border-right:1px solid var(--border)}
+.stat-item:last-child{border-right:none}
+.stat-label{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.stat-num{font-family:'IBM Plex Mono',monospace;font-size:1.6rem;font-weight:500;letter-spacing:-.02em}
+.stat-num.orange{color:var(--accent)}
+.stat-num.green{color:var(--green)}
+
+.main{max-width:1200px;margin:0 auto;padding:2rem}
+
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;justify-content:space-between}
+.filter-group{display:flex;gap:4px}
+.filter-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:.78rem;color:var(--muted);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.filter-btn:hover{border-color:var(--border2);color:var(--text)}
+.filter-btn.active{background:var(--text);color:#f7f6f3;border-color:var(--text)}
+.refresh-btn{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:.78rem;color:var(--muted);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.refresh-btn:hover{border-color:var(--border2);color:var(--text)}
+.refresh-btn svg{width:13px;height:13px;transition:transform .4s}
+.refresh-btn.spinning svg{animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead tr{background:var(--surface2)}
+th{padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:500;color:var(--muted);text-align:left;letter-spacing:.07em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:14px 16px;font-size:.83rem;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .1s}
+tbody tr:hover td{background:var(--surface2)}
+col.c1{width:14%}col.c2{width:10%}col.c3{width:7%}col.c4{width:8%}col.c5{width:9%}col.c6{width:9%}col.c7{width:7%}col.c8{width:10%}col.c9{width:7%}col.ca{width:7%}col.cb{width:12%}
+
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:500;padding:3px 9px;border-radius:4px;white-space:nowrap;font-family:'IBM Plex Mono',monospace}
+.badge-done{background:var(--green-bg);color:var(--green)}
+.type-badge{display:inline-flex;align-items:center;font-size:.7rem;font-weight:500;padding:2px 8px;border-radius:4px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.type-정규직{background:#e8f4fd;color:#1a6fa8}
+.type-계약직{background:#fdf3e8;color:#a05c10}
+.badge-pending{background:var(--amber-bg);color:var(--amber)}
+.badge-submitted{background:var(--green-bg);color:var(--green)}
+.badge-pass1{background:#e8f4fd;color:#1a6fa8}
+.badge-pass2{background:#f0e8fd;color:#7c3aad}
+.badge-final{background:#fff8e1;color:#c77700;font-weight:700}
+.badge-fail{background:#fdecea;color:#c0392b}
+.salary-mono{font-family:'IBM Plex Mono',monospace;font-size:.8rem}
+.link-btn{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;color:var(--accent);text-decoration:none;border:1px solid #f0c0aa;background:#fdf3ee;border-radius:5px;padding:3px 9px;transition:opacity .15s;white-space:nowrap}
+.link-btn:hover{opacity:.75}
+.link-btn svg{width:10px;height:10px}
+.dl{font-family:'IBM Plex Mono',monospace;font-size:.75rem}
+.dl-urgent{color:var(--red)}
+.dl-soon{color:var(--amber)}
+.dl-ok{color:var(--muted)}
+.dl-past{color:var(--border2);text-decoration:line-through}
+
+/* 로딩/에러 */
+.state-row td{text-align:center;padding:4rem;color:var(--muted);font-size:.85rem}
+.spinner-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.big-spinner{width:28px;height:28px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+.error-box{background:var(--red-bg);border:1px solid #f5c6c2;border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1.5rem;font-size:.83rem;color:var(--red);display:none}
+.error-box.show{display:block}
+.error-box strong{font-weight:700;display:block;margin-bottom:4px}
+
+/* 설정 배너 */
+.setup-banner{background:var(--surface);border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem;text-align:center}
+.setup-banner h3{font-size:.95rem;font-weight:700;margin-bottom:.5rem}
+.setup-banner p{font-size:.8rem;color:var(--muted);line-height:1.7;margin-bottom:1rem}
+.setup-banner code{background:var(--surface2);padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--text)}
+.setup-input-row{display:flex;gap:8px;max-width:600px;margin:0 auto}
+.setup-input-row input{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:9px 12px;font-size:.82rem;font-family:'IBM Plex Mono',monospace;color:var(--text);outline:none;transition:border-color .15s}
+.setup-input-row input:focus{border-color:var(--text)}
+.setup-input-row input::placeholder{color:var(--border2)}
+.btn-connect{background:var(--text);border:none;border-radius:var(--radius);padding:9px 20px;font-size:.82rem;font-weight:700;color:var(--bg);cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;transition:opacity .15s}
+.btn-connect:hover{opacity:.8}
+
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:700px){.stats-strip{flex-wrap:wrap}.topbar{padding:0 1rem}.main{padding:1rem}.setup-input-row{flex-direction:column}}
+</style>
+<meta property="og:title" content="예원 프로젝트">
+<meta property="og:description" content="취업 지원 현황을 한눈에 확인하세요">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sele-yang.github.io/job-tracker">
+<meta property="og:image" content="https://og-image.vercel.app/%EC%98%88%EC%9B%90%20%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8.png">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">Job Tracker</div>
+  <div class="topbar-right">
+    <div class="last-updated" id="last-updated"></div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+</div>
+
+<div class="stats-strip">
+  <div class="stat-item"><div class="stat-label">Total</div><div class="stat-num" id="s-total">—</div></div>
+  <div class="stat-item"><div class="stat-label">Submitted</div><div class="stat-num green" id="s-done">—</div></div>
+  <div class="stat-item"><div class="stat-label">Pending</div><div class="stat-num orange" id="s-pending">—</div></div>
+  <div class="stat-item"><div class="stat-label">Avg Salary</div><div class="stat-num" id="s-avg" style="font-size:1.2rem">—</div></div>
+</div>
+
+<div class="main">
+
+  <!-- 설정 배너 (시트 미연결시 표시) -->
+  <div class="setup-banner" id="setup-banner">
+    <h3>📋 Google Sheets 연결하기</h3>
+    <p>
+      Google Apps Script 배포 URL을 붙여넣으면 바로 연결돼요.<br>Apps Script → 배포 → 배포 관리에서 URL을 복사해 주세요.
+    </p>
+    <div class="setup-input-row">
+      <input type="text" id="sheet-url-input" placeholder="https://script.google.com/macros/s/.../exec 또는 Google Sheets URL">
+      <button class="btn-connect" onclick="connectSheet()">연결하기</button>
+    </div>
+  </div>
+
+  <div class="error-box" id="error-box">
+    <strong>데이터를 불러오지 못했어요</strong>
+    <span id="error-msg"></span>
+  </div>
+
+  <div class="toolbar">
+    <div class="filter-group">
+      <button class="filter-btn active" onclick="setFilter('all',this)">전체</button>
+      <button class="filter-btn" onclick="setFilter('pending',this)">미제출</button>
+      <button class="filter-btn" onclick="setFilter('submitted',this)">제출완료</button>
+      <button class="filter-btn" onclick="setFilter('pass1',this)">1차합격</button>
+      <button class="filter-btn" onclick="setFilter('pass2',this)">2차합격</button>
+      <button class="filter-btn" onclick="setFilter('final',this)">최종합격</button>
+      <button class="filter-btn" onclick="setFilter('fail',this)">불합격</button>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="refresh-btn" id="refresh-btn" onclick="loadData()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        새로고침
+      </button>
+      <button class="refresh-btn" onclick="resetSheet()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        시트 변경
+      </button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"><col class="c7"><col class="c8"><col class="c9"><col class="ca"><col class="cb"></colgroup>
+      <thead>
+        <tr>
+          <th>공고명</th><th>업체명</th><th>사이트</th><th>연봉</th>
+          <th>고용형태</th><th>근무지역</th><th>링크</th><th>제출 여부</th><th>마감일</th><th>지원일</th><th>메모</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const SHEET_KEY = 'jt_sheet_url';
+const STATUS_LABEL = {
+  pending:   '○ 미제출',
+  submitted: '✓ 제출완료',
+  pass1:     '★ 1차합격',
+  pass2:     '★★ 2차합격',
+  final:     '🎉 최종합격',
+  fail:      '✕ 불합격',
+};
+function statusFromText(t) {
+  t = String(t||'').trim();
+  if (['최종합격','final','최종 합격'].includes(t)) return 'final';
+  if (['2차합격','pass2','2차 합격'].includes(t)) return 'pass2';
+  if (['1차합격','pass1','1차 합격'].includes(t)) return 'pass1';
+  if (['완료','제출완료','submitted','done','제출 완료'].includes(t)) return 'submitted';
+  if (['불합격','fail','탈락'].includes(t)) return 'fail';
+  return 'pending';
+}
+let allJobs = [], activeFilter = 'all';
+
+// ── 유틸 ──
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function dlTag(s) {
+  if (!s) return '<span style="color:var(--border2)">—</span>';
+  const d = new Date(s), now = new Date(); now.setHours(0,0,0,0);
+  const diff = Math.round((d - now) / 86400000);
+  const lbl = d.toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'}).replace('. ','월 ').replace('.','일');
+  if (diff < 0)   return `<span class="dl dl-past">${lbl}</span>`;
+  if (diff === 0) return `<span class="dl dl-urgent">오늘!</span>`;
+  if (diff <= 3)  return `<span class="dl dl-urgent">D-${diff}</span>`;
+  if (diff <= 7)  return `<span class="dl dl-soon">D-${diff}</span>`;
+  return `<span class="dl dl-ok">D-${diff}</span>`;
+}
+
+// ── URL 판별 ──
+function getDataUrl(url) {
+  url = url.trim();
+  // Apps Script URL
+  if (url.includes('script.google.com/macros')) return { type: 'apps_script', url };
+  // 웹에 게시 링크
+  const pubMatch = url.match(/\/spreadsheets\/d\/e\/([^/]+)\//);
+  if (pubMatch) return { type: 'csv', url: `https://docs.google.com/spreadsheets/d/e/${pubMatch[1]}/pub?output=csv&gid=0` };
+  // 일반 편집 링크
+  const editMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if (editMatch) return { type: 'csv', url: `https://docs.google.com/spreadsheets/d/${editMatch[1]}/export?format=csv&gid=0` };
+  return null;
+}
+
+// ── CSV 파싱 ──
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  // 헤더: 공고명,업체명,사이트,연봉,고용형태,수습기간,링크,제출여부,마감일
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitCSVLine(lines[i]);
+    if (!cols[0] && !cols[1]) continue;
+    rows.push({
+      title:     (cols[0]||'').trim(),
+      company:   (cols[1]||'').trim(),
+      site:      (cols[2]||'').trim(),
+      salary:    (cols[3]||'').trim(),
+      type:      (cols[4]||'').trim(),
+      probation: (cols[5]||'').trim(),
+      link:      (cols[6]||'').trim(),
+      status:    (cols[7]||'').trim().toLowerCase() === '완료' || (cols[7]||'').trim() === '제출완료' || (cols[7]||'').trim() === 'done' ? 'done' : 'pending',
+      deadline:  (cols[8]||'').trim(),
+    });
+  }
+  return rows;
+}
+
+function splitCSVLine(line) {
+  const cols = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') { inQ = !inQ; continue; }
+    if (line[i] === ',' && !inQ) { cols.push(cur); cur = ''; continue; }
+    cur += line[i];
+  }
+  cols.push(cur);
+  return cols;
+}
+
+// ── 렌더 ──
+function renderStats() {
+  const done = allJobs.filter(j => ['submitted','pass1','pass2','final'].includes(j.status)).length;
+  const sals = allJobs.map(j => parseFloat(j.salary)).filter(s => !isNaN(s) && s > 0);
+  const avg = sals.length ? Math.round(sals.reduce((a,b)=>a+b,0)/sals.length).toLocaleString()+'만' : '—';
+  document.getElementById('s-total').textContent = allJobs.length || '—';
+  document.getElementById('s-done').textContent = done || '—';
+  document.getElementById('s-pending').textContent = (allJobs.length - done) || '—';
+  document.getElementById('s-avg').innerHTML = avg;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  const list = activeFilter === 'all' ? allJobs : allJobs.filter(j => j.status === activeFilter);
+
+  if (!list.length && allJobs.length) {
+    tbody.innerHTML = `<tr class="state-row"><td colspan="9" style="color:var(--muted);text-align:center;padding:3rem">해당하는 공고가 없어요</td></tr>`;
+    return;
+  }
+  if (!list.length) return;
+
+  list.forEach(j => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      `<td title="${esc(j.title)}" style="font-weight:500">${esc(j.title)}</td>` +
+      `<td title="${esc(j.company)}">${esc(j.company)}</td>` +
+      `<td style="color:var(--muted);font-size:.78rem">${j.site||'<span style="color:var(--border2)">—</span>'}</td>` +
+      `<td class="salary-mono">${j.salary ? Number(j.salary).toLocaleString()+'<span style="font-size:.7rem;color:var(--muted)">만</span>' : '<span style="color:var(--border2)">미기재</span>'}</td>` +
+      `<td>${j.type ? `<span class="type-badge type-${esc(j.type)}">${esc(j.type)}</span>` : '<span style="color:var(--border2)">—</span>'}</td>` +
+      `<td style="font-size:.78rem;color:var(--muted)">${j.location||'<span style="color:var(--border2)">—</span>'}</td>` +
+      `<td>${j.link ? `<a class="link-btn" href="${esc(j.link)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>바로가기</a>` : '<span style="color:var(--border2)">—</span>'}</td>` +
+      `<td><span class="badge badge-${j.status||'pending'}">${STATUS_LABEL[j.status||'pending']}</span></td>` +
+      `<td style="font-size:.75rem;color:var(--muted);font-family:'IBM Plex Mono',monospace">${j.probation||'—'}</td>` +
+      `<td>${dlTag(j.deadline)}</td>` +
+      `<td style="font-size:.75rem;color:var(--muted);font-family:'IBM Plex Mono',monospace">${j.applied||'<span style="color:var(--border2)">—</span>'}</td>` +
+      `<td title="${j.memo ? esc(j.memo) : ''}" style="font-size:.78rem;color:var(--muted)">${j.memo||'<span style="color:var(--border2)">—</span>'}</td>`;
+    tbody.appendChild(tr);
+  });
+  renderStats();
+}
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+// ── 데이터 로드 ──
+async function loadData() {
+  const url = localStorage.getItem(SHEET_KEY);
+  if (!url) return;
+
+  const dataUrl = getDataUrl(url);
+  if (!dataUrl) { showError('올바른 URL이 아니에요. Apps Script URL 또는 Google Sheets URL을 입력해 주세요.'); return; }
+
+  const btn = document.getElementById('refresh-btn');
+  const tbody = document.getElementById('tbody');
+  btn.classList.add('spinning');
+  hideError();
+  tbody.innerHTML = `<tr class="state-row"><td colspan="9"><div class="spinner-wrap"><div class="big-spinner"></div><span style="font-size:.8rem;color:var(--muted)">불러오는 중...</span></div></td></tr>`;
+
+  try {
+    const res = await fetch(dataUrl.url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (dataUrl.type === 'apps_script') {
+      const json = await res.json();
+      allJobs = json.map(row => ({
+        title:     String(row['공고명']||'').trim(),
+        company:   String(row['업체명']||'').trim(),
+        site:      String(row['사이트']||'').trim(),
+        salary:    String(row['연봉']||'').trim(),
+        type:      String(row['고용형태']||'').trim(),
+        probation: String(row['수습기간']||'').trim(),
+        link:      String(row['링크']||'').trim(),
+        status:    statusFromText(row['제출여부']),
+        deadline:  String(row['마감일']||'').trim(),
+        location:  String(row['근무지역']||'').trim(),
+        applied:   String(row['지원일']||'').trim(),
+        memo:      String(row['메모']||'').trim(),
+      })).filter(j => j.title || j.company);
+    } else {
+      const text = await res.text();
+      allJobs = parseCSV(text);
+    }
+    renderTable();
+    document.getElementById('last-updated').textContent =
+      '업데이트 ' + new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+  } catch(e) {
+    showError('데이터를 불러오지 못했어요. URL을 다시 확인해 주세요. (' + e.message + ')');
+    tbody.innerHTML = `<tr class="state-row"><td colspan="9" style="color:var(--muted);text-align:center;padding:3rem">데이터를 불러올 수 없어요</td></tr>`;
+  } finally {
+    btn.classList.remove('spinning');
+  }
+}
+
+function connectSheet() {
+  const val = document.getElementById('sheet-url-input').value.trim();
+  if (!val) { alert('URL을 입력해 주세요.'); return; }
+  localStorage.setItem(SHEET_KEY, val);
+  document.getElementById('setup-banner').style.display = 'none';
+  loadData();
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-box');
+  document.getElementById('error-msg').textContent = msg;
+  el.classList.add('show');
+}
+function hideError() {
+  document.getElementById('error-box').classList.remove('show');
+}
+
+// ── 초기화 ──
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('ko-KR', {year:'numeric', month:'long', day:'numeric', weekday:'long'});
+
+function resetSheet() {
+  localStorage.removeItem(SHEET_KEY);
+  document.getElementById('setup-banner').style.display = '';
+  document.getElementById('sheet-url-input').value = '';
+  document.getElementById('tbody').innerHTML = '';
+  allJobs = [];
+  renderStats();
+  hideError();
+}
+
+const savedUrl = localStorage.getItem(SHEET_KEY);
+if (savedUrl) {
+  document.getElementById('setup-banner').style.display = 'none';
+  document.getElementById('sheet-url-input').value = savedUrl;
+  loadData();
+}
+</script>
+</body>
+</html>
